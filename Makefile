@@ -3,7 +3,7 @@
 CXX = $(shell fltk-config --cxx)
 
 # Set the flags for compiler: fltk-config knows the basic settings, then we can add our own...
-CXXFLAGS = $(shell fltk-config --cxxflags) -Wall -O3 -std=c++11
+CXXFLAGS = $(shell fltk-config --cxxflags) -Wall -O3 -std=c++17
 
 # We don't know what libraries to link with: fltk-config does...
 LINK = $(shell fltk-config --ldflags)

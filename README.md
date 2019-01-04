@@ -1,1 +1,2 @@
-apt-get install libfltk1.3-dev
+`apt-get install libfltk1.3-dev`
+`brew install fltk`
