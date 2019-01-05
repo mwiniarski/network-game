@@ -6,12 +6,17 @@
 #include <FL/Enumerations.H>
 #include <iostream>
 #include <string>
-#include <memory>
 #include <unistd.h>
 #include <thread>
 #include <math.h>
 #include <stdlib.h>
-#include <time.h> 
+#include <time.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <vector>
+#include <thread>
+
 using namespace std;
 
 class Paddle {
@@ -181,8 +186,65 @@ void gameLoop(void * obj)
     Fl::repeat_timeout(0.02, gameLoop, obj);
 }
 
+
+void sender(vector<int> &&msgs, int socket, sockaddr_in &&addr) 
+{
+    cout << msgs.size() << endl;
+    for (auto i : msgs) 
+    {
+        sendto(socket, &i, sizeof(i), 0, (sockaddr *)&addr, sizeof(sockaddr_in));
+    }
+}
+
+void connect()
+{
+    const int PORT = 8888;
+    int sock;
+    struct sockaddr_in addr;
+
+    //set port && allow any incoming address
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(PORT);
+    inet_aton("127.0.0.1", &addr.sin_addr);
+
+    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+    {
+        cout << "Socket";
+        return;
+    }
+
+    while (true)
+    {
+        int LEN = 10000;
+        vector<int> messages(LEN);
+        vector<int> responses(LEN);
+        for (int i = 0; i < messages.size(); i++)
+            messages[i] = i;
+
+        cout << messages.size() << endl;
+        thread t1(sender, messages, sock, addr);
+        t1.detach();
+        
+       
+        socklen_t slen = sizeof(sockaddr_in);
+
+        for (int i = 0; i < LEN; i++)
+        {   
+            int bNumber;
+            ssize_t msglen = recvfrom(sock, &bNumber, sizeof(bNumber), 0, (sockaddr *)&addr, &slen);
+            cout << "Recv: " << bNumber << endl;
+        }
+        //cout << "Message: " << bNumber << endl;
+        this_thread::sleep_for(100s);        
+        continue;
+    }
+}
+
 int main() 
 {
+    connect();
+    return 1;
+    
     Fl_Window win(400, 400);
     GameBoard pb1(0, 0, 400, 400, 0);
     win.show();
