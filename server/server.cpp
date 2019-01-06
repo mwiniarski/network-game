@@ -2,7 +2,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <thread> 
+#include <thread>
+#include <vector>
 
 using namespace std;
 
@@ -33,19 +34,26 @@ int main()
 
     // accept connections
     struct sockaddr_in new_addr;
-
+    int current = -1;
     while (true)
     {
-        const int BUFLEN = 128;
-        uint8_t buffer[BUFLEN];
+	//vector<int> missing;
+        int num;
         socklen_t slen = sizeof(sockaddr_in);
-        ssize_t msglen = recvfrom(sock, buffer, BUFLEN, 0, (sockaddr *)&new_addr, &slen);
-        
-        cout << inet_ntoa(new_addr.sin_addr) << " port ";
-        cout << ntohs(new_addr.sin_port) << endl;
-        cout << "Message: " << buffer << endl;
+        ssize_t msglen = recvfrom(sock, &num, sizeof(int), 0, (sockaddr *)&new_addr, &slen);
+        if (num < current)
+            current = num;
+	for (int i = current + 1; i < num; i++)
+        {
+            cout << "Missing: " << i << endl;
+        }
+        current = num;
+	//cout << num << endl;
+        //cout << inet_ntoa(new_addr.sin_addr) << " port ";
+       	//cout << ntohs(new_addr.sin_port) << endl;
+        //cout << "Message: " << buffer << endl;
 
-        sendto(sock, buffer, msglen, 0, (sockaddr *)&new_addr, slen);
+        sendto(sock, &num, msglen, 0, (sockaddr *)&new_addr, slen);
         continue;
     }
 

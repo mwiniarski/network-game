@@ -6,7 +6,7 @@ CXX = $(shell fltk-config --cxx)
 CXXFLAGS = $(shell fltk-config --cxxflags) -Wall -O3 -std=c++17
 
 # We don't know what libraries to link with: fltk-config does...
-LINK = $(shell fltk-config --ldflags)
+LINK = $(shell fltk-config --ldflags) -pthread
 LINKFLTK = $(shell fltk-config --ldstaticflags)
 LINKFLTK_GL = $(shell fltk-config --use-gl --ldstaticflags)
 LINKFLTK_IMG = $(shell fltk-config --use-images --ldstaticflags)
