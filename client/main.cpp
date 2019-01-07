@@ -187,12 +187,14 @@ void gameLoop(void * obj)
 }
 
 
+
 void sender(vector<int> &&msgs, int socket, sockaddr_in &&addr) 
 {
     cout << msgs.size() << endl;
     for (auto i : msgs) 
     {
         sendto(socket, &i, sizeof(i), 0, (sockaddr *)&addr, sizeof(sockaddr_in));
+        this_thread::sleep_for(10ms);
     }
 }
 
@@ -205,7 +207,7 @@ void connect()
     //set port && allow any incoming address
     addr.sin_family = AF_INET;
     addr.sin_port = htons(PORT);
-    inet_aton("127.0.0.1", &addr.sin_addr);
+    inet_aton("128.199.57.124", &addr.sin_addr);
 
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
     {
@@ -215,7 +217,7 @@ void connect()
 
     while (true)
     {
-        int LEN = 10000;
+        int LEN = 300;
         vector<int> messages(LEN);
         vector<int> responses(LEN);
         for (int i = 0; i < messages.size(); i++)
@@ -227,12 +229,11 @@ void connect()
         
        
         socklen_t slen = sizeof(sockaddr_in);
-
         for (int i = 0; i < LEN; i++)
         {   
             int bNumber;
             ssize_t msglen = recvfrom(sock, &bNumber, sizeof(bNumber), 0, (sockaddr *)&addr, &slen);
-            cout << "Recv: " << bNumber << endl;
+            cout << i << " recv: " << bNumber << endl;
         }
         //cout << "Message: " << bNumber << endl;
         this_thread::sleep_for(100s);        
