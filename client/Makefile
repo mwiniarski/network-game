@@ -16,7 +16,7 @@ all: main.app
 
 # Define how to build the various object files...
 
-main.o: main.cpp # a C++ file
+main.o: main.cpp network.h # a C++ file
 		$(CXX) -c $< $(CXXFLAGS)
 
 # Now define how to link the final app - let's assume it needs image and OpenGL support
