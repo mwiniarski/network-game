@@ -10,27 +10,9 @@
 #include <time.h>
 
 #include "network.h"
+#include "Paddle.h"
 
 using namespace std;
-
-class Paddle {
-private:
-    const int _x;
-    int _y;
-
-public:
-    Paddle(int x, int y) 
-        : _x(x), _y(y)
-    {}
-
-    int x() { return _x; }
-    int y() { return _y; }
-    void up() { _y -= 5; }
-    void down() { _y += 5; }
-
-    const int SIZEX = 10;
-    const int SIZEY = 50;
-};
 
 struct Ball {
     int _xVel;
@@ -61,6 +43,9 @@ public:
         if (playerNum != 0) {
             std::swap(p1, p2);
         }
+
+        thread recvThread(&StateSender::receive, &ss, p2);
+        recvThread.detach();
     }
 
     int handle(int p) 
@@ -90,12 +75,11 @@ public:
         return 1;
     }
 
-    void up() { p1->up(); }
-    void down() { p1->down(); }
     DIR dir() { return direction; }
 
     Paddle *p1, *p2;
     Ball *ball;
+    StateSender ss;
 
 private:
     void draw() {
@@ -126,24 +110,42 @@ void countVelocity(int &vel1, int &vel2)
 
 void gameLoop(void * obj)
 {
+    static uint32_t counter = 0;
     GameBoard *gb = (GameBoard *)obj;
-
-    // Move paddle
+    static int py[2] = {gb->p2->y(), gb->p2->y()};
+    //cout << "py: " << py << " p2: " << gb->p2->y() << endl;;
+    // Move paddle 1
     switch(gb->dir())
     {
     case GameBoard::UP:
-        gb->up();
+        gb->p1->up();
         break;
     case GameBoard::DOWN:
-        gb->down();
+        gb->p1->down();
         break;
     case GameBoard::NONE:
         break;
-    } 
+    }
 
+    // Move paddle 2
+    StateSender::updt update = gb->ss.getUpdate();
+    if (update.updated)
+    {
+        py[0] = py[1];
+        py[1] = update.value;
+        gb->p2->y(update.value);
+    }
+    else if (py[1] != py[0])
+    {   
+        py[1] > py[0] ? gb->p2->down() : gb->p2->up();
+    }
+
+    // Update paddle 1 state
+    if (counter % 2 == 0)
+        gb->ss.send(gb->p1->y());
+    
     // ball
     Ball *b = gb->ball;
-    static int counter = 0;
 
     // borders
     if (b->_y + b->SIZE >= gb->h() || b->_y <= 0)
@@ -182,9 +184,9 @@ void gameLoop(void * obj)
 
 int main() 
 {
-    connect();
-    return 1;
-    
+    //connect();
+    //return 1;
+
     Fl_Window win(400, 400);
     GameBoard pb1(0, 0, 400, 400, 0);
     win.show();
