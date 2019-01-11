@@ -186,7 +186,6 @@ int main()
 {
     //connect();
     //return 1;
-
     Fl_Window win(400, 400);
     GameBoard pb1(0, 0, 400, 400, 0);
     win.show();

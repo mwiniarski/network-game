@@ -6,10 +6,18 @@
 #include <vector>
 
 using namespace std;
+using namespace chrono;
+
+struct Player {
+    struct sockaddr_in addr;
+    high_resolution_clock::time_point timestamp;
+};
 
 int main()
 {
     //create a UDP socket
+    vector<Player> players;
+
     const int PORT = 8888;
     int sock;
     struct sockaddr_in addr;
@@ -37,24 +45,38 @@ int main()
     int current = -1;
     while (true)
     {
-	//vector<int> missing;
         int num;
         socklen_t slen = sizeof(sockaddr_in);
         ssize_t msglen = recvfrom(sock, &num, sizeof(int), 0, (sockaddr *)&new_addr, &slen);
-        if (num < current)
-            current = num;
-	for (int i = current + 1; i < num; i++)
+        // find if user exists
+        bool exists = false;
+        for (auto it = players.begin(); it != players.end(); ++it)
         {
-            cout << "Missing: " << i << endl;
+            if (new_addr.sin_addr.s_addr == it->addr.sin_addr.s_addr && 
+                new_addr.sin_port == it->addr.sin_port)
+            {
+                exists = true;
+                it->timestamp = high_resolution_clock::now();
+            } 
+            else
+            {
+                if (duration_cast<milliseconds>(high_resolution_clock::now() - it->timestamp).count() > 1000)
+                {
+                    it-- = players.erase(it);
+                    cout << "Dropped player: " << inet_ntoa(new_addr.sin_addr) << ":" << ntohs(new_addr.sin_port) << endl;
+                }
+                else 
+                {
+                    sendto(sock, &num, msglen, 0, (sockaddr *)&(it->addr), slen);
+                }
+            }
         }
-        current = num;
-	//cout << num << endl;
-        //cout << inet_ntoa(new_addr.sin_addr) << " port ";
-       	//cout << ntohs(new_addr.sin_port) << endl;
-        //cout << "Message: " << buffer << endl;
 
-        sendto(sock, &num, msglen, 0, (sockaddr *)&new_addr, slen);
-        continue;
+        if (!exists)
+        { 
+            players.push_back({new_addr, chrono::high_resolution_clock::now()});
+            cout << "New player: " << inet_ntoa(new_addr.sin_addr) << ":" << ntohs(new_addr.sin_port) << endl;
+        }
     }
 
     return 1;

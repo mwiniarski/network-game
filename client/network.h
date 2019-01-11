@@ -58,44 +58,6 @@ void receiver(int socket, sockaddr_in &&addr, int msgCount)
     cout << endl << "Packet drop: " << (float)allDropped/msgCount*100 << "\%" << endl;
 }
 
-void connect()
-{
-    const int PORT = 8888;
-    int sock;
-    struct sockaddr_in addr;
-
-    //set port && allow any incoming address
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(PORT);
-    inet_aton("128.199.57.124", &addr.sin_addr);
-
-    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-    {
-        cout << "Socket";
-        return;
-    }
-
-    while (true)
-    {
-        int LEN = 3000;
-        vector<int> messages(LEN);
-        for (uint32_t i = 0; i < messages.size(); i++)
-            messages[i] = i;
-
-        thread t1(receiver, sock, addr, LEN);
-        clockStart();
-        for (uint32_t i = 0; i < messages.size(); i++) 
-        {
-            sendto(sock, &messages[i], sizeof(int), 0, (sockaddr *)&addr, sizeof(sockaddr_in));
-            this_thread::sleep_for(10ms);
-        }
-        cout << clockTime() << endl;
-        t1.join();
-
-        break;       
-    }
-}
-
 class StateSender
 {
 public:
@@ -118,7 +80,7 @@ public:
     {
         addr.sin_family = AF_INET;
         addr.sin_port = htons(PORT);
-        inet_aton("128.199.57.124", &addr.sin_addr);
+        inet_aton(/*"128.199.57.124"*/"127.0.0.1", &addr.sin_addr);
 
         if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
         {
